@@ -18,10 +18,6 @@ public:
     MainWindow(QWidget *parent = 0);
     ~MainWindow();
     /**
-     * @brief read_installator  читаем инсталлятор
-     */
-    void read_installator();
-    /**
      * @brief read_uninstallator  читаем деинсталлятор
      */
     void read_uninstallator();
@@ -37,7 +33,7 @@ public:
     dirs *first_dir;
     long long razd;
     QString name_icon_string;
-    std::function<void(QString)> showMessage;
+
 public slots:
     void files_copy();
     void files_delete();

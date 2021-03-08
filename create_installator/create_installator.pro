@@ -17,10 +17,16 @@ else:win32:CONFIG(debug, debug|release): DESTDIR = $$PWD/../build/debug/
 
 SOURCES += main.cpp\
         filesystem.cpp \
-        mainwindow.cpp
+        mainwindow.cpp \
+        message.cpp \
+        readinstallator.cpp \
+        readuninstallator.cpp
 
 HEADERS  += mainwindow.h \
     data_struct.h \
-    filesystem.h
+    filesystem.h \
+    message.h \
+    readinstallator.h \
+    readuninstallator.h
 
 FORMS += create_installator.ui

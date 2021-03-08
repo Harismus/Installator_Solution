@@ -2,6 +2,9 @@
 
 #include "filesystem.h"
 #include "mainwindow.h"
+#include "message.h"
+#include "readinstallator.h"
+#include "readuninstallator.h"
 
 MainWindow::MainWindow(QWidget *parent)
     : QDialog(parent)
@@ -28,19 +31,13 @@ MainWindow::MainWindow(QWidget *parent)
     connect(listAutoLoading, &QListWidget::clicked, [&](QModelIndex index) {
         list__struct_file[index.row()].autostart = !list__struct_file[index.row()].autostart;
     }); //автозагрузка
-
-    showMessage = [](QString message) {
-        QErrorMessage msg;
-        msg.showMessage(message);
-        msg.show();
-    };
 }
 
 void MainWindow::copy_icon()
 {
     if (le_icon->text().isEmpty())
     {
-        showMessage("Путь до папки пустой");
+        Message::showMessage("Путь до папки пустой");
         return;
     }
 
@@ -59,60 +56,21 @@ void MainWindow::choice_icon()
     }
 }
 
-void MainWindow::read_installator()
-{
-    installator.clear();
-
-#ifdef Q_OS_WIN32
-    auto name_uninstall = QString("installators_forms.exe");
-#elif Q_OS_LINUX
-    auto name_uninstall = QString("installators_forms");
-#endif
-    file.setFileName(name_uninstall);
-    if (!file.open(QIODevice::ReadOnly))
-    {
-        showMessage(QString("При открытие инсталлятора: ") + file.errorString());
-        return;
-    }
-    installator = file.readAll();
-    file.close();
-}
-
-void MainWindow::read_uninstallator()
-{
-    uninstallator.clear();
-
-#ifdef Q_OS_WIN
-    auto name_install = QString("uninstallators_forms.exe");
-#elif Q_OS_LINUX
-    auto name_install = QString("uninstallators_forms");
-#endif
-    file.setFileName(name_install);
-    if (!file.open(QIODevice::ReadOnly))
-    {
-        showMessage(QString("При открытие деинсталлятора: ") + file.errorString());
-        return;
-    }
-    uninstallator = file.readAll();
-
-    file.close();
-}
-
 void MainWindow::files_copy()
 {
     if (le_copy->text().isEmpty())
     {
-        showMessage("Путь до папки пустой");
+        Message::showMessage("Путь до папки пустой");
         return;
     }
     if (list__struct_file.size())
     {
-        showMessage("Перезапустите приложение");
+        Message::showMessage("Перезапустите приложение");
         return;
     }
     /* Создаем дерево папок */
-    read_installator();
-    read_uninstallator();
+    installator = ReadInstallator::readInstallator();
+    uninstallator = ReadUnInstallator::readUnInstallator();
 
     FileSystem fileSystem;
     auto [listDirs, listFiles] = fileSystem.read("", le_copy->text());
@@ -130,7 +88,7 @@ void MainWindow::files_delete()
 {
     if (le_delete->text().isEmpty())
     {
-        showMessage("Путь до папки пустой");
+        Message::showMessage("Путь до папки пустой");
         return;
     }
     dir = QDir(le_delete->text());
@@ -149,13 +107,13 @@ void MainWindow::files_install()
 {
     if (le_install->text().isEmpty())
     {
-        showMessage("Путь до папки пустой");
+        Message::showMessage("Путь до папки пустой");
         return;
     }
 
     if (installator.isEmpty())
     {
-        showMessage("Пустой буфер");
+        Message::showMessage("Пустой буфер");
         return;
     }
 
@@ -167,7 +125,7 @@ void MainWindow::files_install()
     QFile file(le_install->text() + name_setup);
     if (!file.open(QIODevice::ReadWrite))
     {
-        showMessage("Не открыло файл");
+        Message::showMessage("Не открыло файл");
         return;
     }
     //дальше в файл нужно слить всю инфу
