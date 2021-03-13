@@ -1,4 +1,7 @@
+#include <QApplication>
 #include <QDir>
+#include <QLabel>
+#include <QPushButton>
 #include <QSettings>
 
 #include "installator.h"
@@ -20,15 +23,15 @@ Installator::Installator()
 
 void Installator::createPages()
 {
-    auto ppage2 = new QWizardPage;
-    ppage2->setLayout(path_window->lay);
-    auto ptrNextButton = new QPushButton;
-    ptrNextButton = qobject_cast<QPushButton *>(this->button(QWizard::NextButton));
-    path_window->setButton(ptrNextButton);
+    auto page2 = new QWizardPage;
+    page2->setLayout(path_window->getLay());
+    auto nextButton = new QPushButton;
+    nextButton = qobject_cast<QPushButton *>(this->button(QWizard::NextButton));
+    path_window->setButton(nextButton);
     path_window->setInstallationPath(&installation_path);
-    addPage(ppage2);
+    addPage(page2);
 
-    auto ppage3 = new QWizardPage;
+    auto page3 = new QWizardPage;
     progressDialog->setCancelButton(nullptr);
     progressDialog->setAutoClose(false);
     progressDialog->setAutoReset(false);
@@ -37,10 +40,10 @@ void Installator::createPages()
     te.setReadOnly(true);
     vlay3page->addSpacing(50);
     vlay3page->addWidget(&te);
-    ppage3->setLayout(vlay3page);
-    addPage(ppage3);
+    page3->setLayout(vlay3page);
+    addPage(page3);
 
-    auto ppage4 = new QWizardPage;
+    auto page4 = new QWizardPage;
     auto vlay4page = new QVBoxLayout;
 
     auto hlay = new QHBoxLayout[2];
@@ -61,8 +64,8 @@ void Installator::createPages()
     vlay4page->addLayout(&hlay[0]);
     vlay4page->addLayout(&hlay[1]);
 
-    ppage4->setLayout(vlay4page);
-    addPage(ppage4);
+    page4->setLayout(vlay4page);
+    addPage(page4);
 }
 
 void Installator::setAutoStartApplication()
@@ -220,187 +223,83 @@ void Installator::onPageChanged(int i)
 
     if (i == 0) //!< окно установки пути инсталляции
     {
-        path_window->le_guide->setText(checkInstallDir());
-        if (!path_window->le_guide->text().isEmpty())
+        path_window->setText(checkInstallDir());
+        if (!path_window->isEmpty())
         {
             button(QWizard::NextButton)->setEnabled(true);
         }
     }
 
-    if (i == 1) //!< страница загрузки
+    if (i == 1)
     {
-        QDir dir(installation_path);
+        Parser parser(qApp->applicationFilePath());
+        parser.findDelimiterInstallator();
+        auto unInstallator = parser.readUninstallator();
+        auto appName = parser.readApplicationName();
 
-        if (!dir.exists()) //!< если такой папки не существует, то создаем ее
-            dir.mkdir(installation_path);
-
-        button(QWizard::NextButton)->setEnabled(false);
-        button(QWizard::CancelButton)->hide();
-        /*        Копирования данных, разбор и создание папок        */
-        long long temp = 0;
-        int count = 0;
-        /*        Открытие и считывания самого себя         */
-        file.setFileName(qApp->applicationFilePath());
-        float current_percent = 0;
-        auto percent_from_file = static_cast<float>(100) / file.size();
-
-        if (!file.open(QIODevice::ReadOnly))
+        auto filesCount = parser.readFilesCount();
+        for (int i = 0; i < filesCount; ++i)
         {
-            msg.showMessage(file.errorString());
-            msg.show();
-            return;
+            auto data = parser.readFile();
+            filesList.append(data);
         }
 
-        while (!file.atEnd())
+        auto dirsCount = parser.readDirsCount();
+        for (int i = 0; i < dirsCount; ++i)
         {
-            file.read(reinterpret_cast<char *>(&temp), sizeof(long long));
+            auto data = parser.readDirs();
+            listDirs.append(data);
+        }
 
-            current_percent += percent_from_file * (sizeof(temp)); //вычисляем количество(считаем инсталлятор)
-            progressDialog->setValue(static_cast<int>(current_percent));
-
-            if (temp == razd)
+        for (const auto &dir : listDirs)
+        {
+            QDir qDir(dir.path);
+            if (!qDir.exists())
             {
-                count++;
-            }
-
-            if (count == 1) //файлы инсталлируемого приложения
-            {
-                char bytes;
-                int uninstall_size; //размер деинсталлятора
-                file.read(reinterpret_cast<char *>(&uninstall_size), sizeof(uninstall_size));
-                for (int i = 0; i < uninstall_size; i++)
-                {
-                    file.read(&bytes, sizeof(bytes));
-                    uninstall.append(bytes);
-                }
-
-                current_percent += percent_from_file * uninstall_size; //вычисляем количество(считаем деинсталлятор)
-                //читаем  название приложения
-                int count_string_name = 0;
-
-                file.read(reinterpret_cast<char *>(&count_string_name), sizeof(count_string_name));
-
-                current_percent += percent_from_file * sizeof(count_string_name);
-                progressDialog->setValue(static_cast<int>(current_percent));
-
-                auto application_name = new char[count_string_name + 1];
-                file.read(application_name, count_string_name);
-
-                current_percent += percent_from_file * sizeof(count_string_name);
-                progressDialog->setValue(static_cast<int>(current_percent));
-
-                application_name[count_string_name] = 0;
-                applicationName.clear();
-                applicationName.append(application_name);
-
-                while (!file.atEnd())
-                {
-                    datas d;
-                    file.read(reinterpret_cast<char *>(&d.quantity), sizeof(d.quantity));
-
-                    current_percent += percent_from_file * sizeof(d.quantity); //вычисляем количество
-                    progressDialog->setValue(static_cast<int>(current_percent));
-
-                    int n = 0;
-                    file.read(reinterpret_cast<char *>(&n), sizeof(n));
-                    d.str = new char[n + 1];
-
-                    file.read(d.str, n);
-
-                    d.str[n] = 0;
-
-                    d.path.append(QString().fromLocal8Bit(d.str));
-
-                    te.append(installation_path + d.path + QString(" - файл скопирован.."));
-                    //создание папок
-                    QString path;
-                    QStringList list_dirs = d.path.split("/");
-                    path.clear();
-                    for (int j = 1; j < list_dirs.size() - 1; j++)
-                    {
-                        path.append(list_dirs[j] + QString("/"));
-                        QDir dir(installation_path + QString("/") + path);
-                        if (!dir.exists()) //если такой папки не существует, то создаем ее
-                            dir.mkdir(installation_path + QString("/") + path);
-                    }
-
-                    QFile file_creator;
-                    file_creator.setFileName(installation_path + QString("/") + d.path);
-                    if (!file_creator.open(QIODevice::ReadWrite))
-                    {
-                        msg.showMessage(installation_path + d.path + file.errorString());
-                        msg.show();
-                        return;
-                    }
-                    //дальше в файл нужно слить всю инфу
-                    ba_files.clear();
-                    for (int j = 0; j < d.quantity; j++)
-                    {
-                        file.read(&bytes, sizeof(bytes));
-                        ba_files.append(bytes);
-                    }
-                    current_percent += percent_from_file * d.quantity; //вычисляем количество
-                    progressDialog->setValue(static_cast<int>(current_percent));
-                    file_creator.write(ba_files.data(), d.quantity);
-                    file_creator.setPermissions(QFileDevice::ExeUser | QFileDevice::ExeOwner | QFileDevice::ExeOther | QFileDevice::ExeGroup
-                                                | QFileDevice::WriteUser | QFileDevice::ReadUser);
-                    file_creator.close();
-
-                    file.read(reinterpret_cast<char *>(&d.link), sizeof(bool));
-                    current_percent += percent_from_file * sizeof(bool); //вычисляем количество
-                    progressDialog->setValue(static_cast<int>(current_percent));
-                    file.read(reinterpret_cast<char *>(&d.autostart), sizeof(bool));
-                    current_percent += percent_from_file * sizeof(bool); //вычисляем количество
-                    progressDialog->setValue(static_cast<int>(current_percent));
-                    files_list.append(d);
-
-                    if (d.link)
-                        link_list.append(d);
-
-                    if (d.autostart)
-                        autostart_list.append(d);
-                }
-                progressDialog->setValue(100);
+                qDir.mkdir(installation_path + dir.path);
             }
         }
-        file.close();
+
+        for (const auto &file : filesList)
+        {
+            QFile qFile(installation_path + file.path);
+            if (!qFile.open(QIODevice::WriteOnly))
+            {
+                msg.showMessage(qFile.errorString());
+                msg.show();
+                return;
+            }
+            qFile.write(file.ba);
+            qFile.close();
+        }
 
 #if defined(Q_OS_WIN32) || defined(Q_OS_WIN64)
         auto name_uninstall = QString("uninstall.exe");
 #elif __linux__
         auto name_uninstall = QString("uninstall");
 #endif
-        file.setFileName(installation_path + QString("/") + name_uninstall);
+        QFile file(installation_path + name_uninstall);
         if (!file.open(QIODevice::WriteOnly))
         {
             msg.showMessage(file.errorString());
             msg.show();
             return;
         }
-        file.write(uninstall);
-        file.write(reinterpret_cast<char *>(&razd_uninstall), sizeof(razd_uninstall));
+        file.write(unInstallator); //!< записываем сам деинсталлятор
+        file.write(reinterpret_cast<char *>(&razd_uninstall), sizeof(razd_uninstall)); //!< разделитель между данными
 
-        auto application_name = new char[applicationName.toLocal8Bit().size()];
-        for (int k = 0; k < applicationName.toLocal8Bit().size(); k++)
-        {
-            application_name[k] = *(applicationName.toLocal8Bit().data() + k);
-        }
+        int appNameLength = appName.toLocal8Bit().size();
+        file.write(reinterpret_cast<char *>(&appNameLength), sizeof(appNameLength));
+        file.write(appName.toLocal8Bit());
 
-        int application_name_string_size = applicationName.toLocal8Bit().size();
-        file.write(reinterpret_cast<char *>(&application_name_string_size), sizeof(application_name_string_size));
-        file.write(application_name, applicationName.toLocal8Bit().size());
-        for (int i = 0; i < files_list.size(); i++)
+        for (int i = 0; i < filesList.size(); i++)
         {
-            int size = files_list[i].path.toLocal8Bit().size();
-            file.write(reinterpret_cast<char *>(&size), sizeof(size));
-            auto buff = new char[size];
-            for (int k = 0; k < files_list[i].path.toLocal8Bit().size(); k++)
-            {
-                buff[k] = *(files_list[i].path.toLocal8Bit().data() + k);
-            }
-            file.write(buff, size);
-            file.write(reinterpret_cast<char *>(&files_list[i].autostart), sizeof(bool));
-            file.write(reinterpret_cast<char *>(&files_list[i].link), sizeof(bool));
+            int length = filesList[i].path.toLocal8Bit().size();
+            file.write(reinterpret_cast<char *>(&length), sizeof(length));
+            file.write(filesList[i].path.toLocal8Bit());
+
+            file.write(reinterpret_cast<char *>(&filesList[i].autostart), sizeof(bool));
+            file.write(reinterpret_cast<char *>(&filesList[i].link), sizeof(bool));
         }
         addUninstall(applicationName); //добавление деинсталлятора в список установка и удаление программ
         file.setPermissions(QFileDevice::ExeUser | QFileDevice::ExeOwner | QFileDevice::ExeOther | QFileDevice::ExeGroup

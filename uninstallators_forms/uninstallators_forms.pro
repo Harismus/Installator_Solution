@@ -8,7 +8,7 @@ QT       += core gui
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
-TARGET = uninstallators_forms
+
 TEMPLATE = app
 QMAKE_LFLAGS_RELEASE += -static -static-libgcc
 

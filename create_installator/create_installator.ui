@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>test_inst</class>
- <widget class="QDialog" name="test_inst">
+ <class>create_installator</class>
+ <widget class="QDialog" name="create_installator">
   <property name="geometry">
    <rect>
     <x>0</x>
     <y>0</y>
     <width>380</width>
-    <height>798</height>
+    <height>809</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -99,14 +99,14 @@
        <item>
         <layout class="QVBoxLayout" name="verticalLayout_2">
          <item>
-          <widget class="QPushButton" name="pb_filedialog_copy">
+          <widget class="QPushButton" name="pb_fileDialogCopy">
            <property name="text">
             <string>проводник</string>
            </property>
           </widget>
          </item>
          <item>
-          <widget class="QPushButton" name="pb_filedialog_delete">
+          <widget class="QPushButton" name="pb_fileDialogInstall">
            <property name="text">
             <string>проводник</string>
            </property>
@@ -176,6 +176,24 @@
       </spacer>
      </item>
      <item>
+      <layout class="QHBoxLayout" name="layValid">
+       <item>
+        <widget class="QPushButton" name="pbValidator">
+         <property name="text">
+          <string>проверка</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QLabel" name="lblValid">
+         <property name="text">
+          <string>----------------------------------------</string>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </item>
+     <item>
       <widget class="QLabel" name="lbl_icon">
        <property name="minimumSize">
         <size>
@@ -211,7 +229,7 @@
         </widget>
        </item>
        <item>
-        <widget class="QLineEdit" name="le_applicationname"/>
+        <widget class="QLineEdit" name="le_ApplicationName"/>
        </item>
       </layout>
      </item>

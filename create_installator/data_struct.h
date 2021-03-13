@@ -7,7 +7,8 @@ struct files
     QString path;
     int quantity;
     QByteArray ba;
-    bool link, autostart;
+    bool link;
+    bool autostart;
     files()
     {
         path.append(nullptr);
@@ -16,16 +17,15 @@ struct files
         autostart = 0;
     }
 };
+
 struct dirs
 {
-    QString path; //!< путь до текущей папки
-    int n;        //!< количество указателей
     dirs()
     {
-        path.append(nullptr);
         n = 0;
-
         link = false;
     }
+    QString path; //!< путь до текущей папки
+    int n;        //!< количество указателей
     bool link;
 };

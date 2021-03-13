@@ -1,12 +1,14 @@
 #include <QDebug>
 
 #include "pathwindow.h"
+#include "ui_pathwindow.h"
 
 PathWindow::PathWindow()
+    : ui(new Ui::path_window)
 {
-    setupUi(this);
-    connect(pb_guide, &QPushButton::clicked, this, &PathWindow::slot_pbguide);
-    connect(le_guide, &QLineEdit::textChanged, this, &PathWindow::slot_leguide);
+    ui->setupUi(this);
+    connect(ui->pb_guide, &QPushButton::clicked, this, &PathWindow::slot_pbguide);
+    connect(ui->le_guide, &QLineEdit::textChanged, this, &PathWindow::slot_leguide);
 }
 
 void PathWindow::setButton(QPushButton *next)
@@ -25,18 +27,18 @@ void PathWindow::setApplicationName(QString text)
 
 void PathWindow::slot_pbguide()
 {
-    auto str = QFileDialog::getExistingDirectory(0, "Select a Directory", le_guide->text());
+    auto str = QFileDialog::getExistingDirectory(0, "Select a Directory", ui->le_guide->text());
     if (!str.isEmpty())
     {
-        le_guide->setText(str + QString("/") + applicationName);
+        ui->le_guide->setText(str + QString("/") + applicationName);
     }
 
     QString str_test;
 
     { //проверка на двойной слеш  "//"
         bool flag = false;
-        auto textTemp = le_guide->text();
-        for (int i = 0; i < le_guide->text().size(); i++)
+        auto textTemp = ui->le_guide->text();
+        for (int i = 0; i < ui->le_guide->text().size(); i++)
         {
             char buff = (textTemp.toLocal8Bit().data() + i)[0];
             char buff1 = (textTemp.toLocal8Bit().data() + i + 1)[0];
@@ -53,8 +55,8 @@ void PathWindow::slot_pbguide()
         }
         if (flag)
         {
-            le_guide->clear();
-            le_guide->setText(str_test);
+            ui->le_guide->clear();
+            ui->le_guide->setText(str_test);
         }
     }
 }
@@ -69,7 +71,7 @@ void PathWindow::slot_leguide(QString text)
         return;
     }
 
-    if (le_guide->text().isEmpty())
+    if (ui->le_guide->text().isEmpty())
     {
         next->setEnabled(false);
     }
@@ -79,7 +81,19 @@ void PathWindow::slot_leguide(QString text)
     }
 }
 
-PathWindow::~PathWindow()
+bool PathWindow::isEmpty()
 {
-    delete lay;
+    return ui->le_guide->text().isEmpty();
 }
+
+void PathWindow::setText(const QString &text)
+{
+    ui->le_guide->setText(text);
+}
+
+QHBoxLayout *PathWindow::getLay()
+{
+    return ui->lay;
+}
+
+PathWindow::~PathWindow() {}

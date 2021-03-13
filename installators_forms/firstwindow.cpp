@@ -7,7 +7,7 @@ FirstWindow::FirstWindow(QWidget *parent)
     : QWidget(parent)
     , pb_inst(new QPushButton("Установить", this))
     , pb_uninst(new QPushButton("Удалить", this))
-    , applicationName("...")
+    , applicationName("")
     , pix(QPixmap(":/resource/installator.png"))
     , widgetPix(new QWidget)
     , lay(new QVBoxLayout(this))
@@ -89,6 +89,9 @@ void FirstWindow::searchProjectName()
 
 void FirstWindow::checkReestr()
 {
+    if (applicationName.isEmpty())
+        return;
+
     bool flag = false;
 
     QSettings settings(reestrUninstall, QSettings::NativeFormat);

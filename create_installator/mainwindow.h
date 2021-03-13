@@ -8,9 +8,13 @@
 #include <QMainWindow>
 
 #include "data_struct.h"
-#include "ui_create_installator.h"
 
-class MainWindow : public QDialog, public Ui_test_inst
+namespace Ui
+{
+class create_installator;
+}
+
+class MainWindow : public QDialog //, public Ui_create_installator
 {
     Q_OBJECT
 
@@ -27,20 +31,23 @@ public:
     QStringList list;
     QByteArray installator;
     QByteArray uninstallator;
-    QList<files> list__struct_file;
-    QList<dirs> list_struct_dirs;
+    QList<files> listFiles;
+    QList<dirs> listDirs;
     dirs *current_dir;
     dirs *first_dir;
-    long long razd;
+    unsigned long long razd;
     QString name_icon_string;
+    Ui::create_installator *ui;
 
 public slots:
-    void files_copy();
-    void files_delete();
-    void files_install();
-    void filedialog_copy();
-    void filedialog_delete();
-    void filedialog_install();
+    void onCopy();
+    void onDelete();
+    void onInstall();
+    void onValid();
+
+    void fileDialogCopy();
+    void fileDialogDelete();
+    void fileDialogInstall();
     void copy_icon();
     void choice_icon();
 };

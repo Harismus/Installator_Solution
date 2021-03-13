@@ -8,8 +8,10 @@
 #include <QRadioButton>
 #include <QStandardPaths>
 #include <QTextEdit>
+#include <QVBoxLayout>
 #include <QWizard>
 
+#include "parser.h"
 #include "pathwindow.h"
 #include "proto.h"
 
@@ -29,9 +31,10 @@ private:
     PathWindow *path_window;
     QProgressDialog *progressDialog;
     QFile file;
-    QList<datas> files_list;
-    QList<datas> link_list;
-    QList<datas> autostart_list;
+    QList<Data> filesList;
+    QList<Data> listDirs;
+    QList<Data> link_list;
+    QList<Data> autostart_list;
     QErrorMessage msg;
     QByteArray uninstall;
     QString installation_path;
@@ -40,8 +43,8 @@ private:
     QByteArray ba;
     QByteArray ba_informs;
     QByteArray ba_files;
-    long long razd;
-    long long razd_uninstall;
+    unsigned long long razd;
+    unsigned long long razd_uninstall;
     QTextEdit te;
     QRadioButton *radio;
     QCheckBox *checkbox;

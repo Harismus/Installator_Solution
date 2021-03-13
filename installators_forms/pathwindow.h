@@ -1,11 +1,15 @@
 #pragma once
 
 #include <QFileDialog>
+#include <QHBoxLayout>
 #include <QWidget>
 
-#include "ui_pathwindow.h"
+namespace Ui
+{
+class path_window;
+}
 
-class PathWindow : public QWidget, public Ui_path_window
+class PathWindow : public QWidget
 {
     Q_OBJECT
 public:
@@ -14,11 +18,15 @@ public:
     void setButton(QPushButton *next);
     void setInstallationPath(QString *next);
     void setApplicationName(QString text);
+    QHBoxLayout *getLay();
+    void setText(const QString &text);
+    bool isEmpty();
 
 private:
     QPushButton *next;
     QString *str;
     QString applicationName;
+    Ui::path_window *ui;
 
 public slots:
     void slot_pbguide();

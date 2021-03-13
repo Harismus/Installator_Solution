@@ -2,11 +2,9 @@
 
 #include "message.h"
 
-std::function<void()> Message::showMessage(QString message)
+void Message::showMessage(QString message)
 {
-    return [message]() {
-        QErrorMessage msg;
-        msg.showMessage(message);
-        msg.show();
-    };
+    QErrorMessage msg;
+    msg.showMessage(message);
+    msg.exec();
 }

@@ -7,5 +7,5 @@
 class Message
 {
 public:
-    static std::function<void()> showMessage(QString);
+    static void showMessage(QString);
 };

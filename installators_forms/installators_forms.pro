@@ -8,25 +8,26 @@ QT       += core gui
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
-TARGET = installators_forms
+
 TEMPLATE = app
 
 QMAKE_LFLAGS_RELEASE += -static -static-libgcc
 
 win32:CONFIG(release, debug|release): DESTDIR = $$PWD/../build/release/
 else:win32:CONFIG(debug, debug|release): DESTDIR = $$PWD/../build/debug/
+include($$PWD/../parser/parser.pri)
 
 SOURCES += main.cpp\
     firstwindow.cpp \
     installator.cpp \
-    mainwindow.cpp \
+    mainwindow.cpp \  
     pathwindow.cpp \
     uninstallator.cpp
 
 HEADERS  += \
     firstwindow.h \
     installator.h \
-    mainwindow.h \
+    mainwindow.h \  
     pathwindow.h \
     proto.h \
     uninstallator.h
