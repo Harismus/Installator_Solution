@@ -17,6 +17,62 @@ Parser::Parser(const QString &pathToFile)
     qDebug() << ba.size();
 }
 
+void Parser::parse()
+{
+    if (!findDelimiterInstallator())
+    {
+        throw("Delimiter didn't find");
+    }
+
+    unInstallator = readUninstallator();
+    if (unInstallator.isEmpty())
+    {
+        throw("uninstallator is Empty");
+    }
+
+    applicationName = readApplicationName();
+    if (applicationName.isEmpty())
+    {
+        throw("appName is Empty");
+    }
+
+    auto filesCount = readFilesCount();
+    if (filesCount == 0)
+    {
+        throw("filesCount is 0");
+    }
+    listFiles.clear();
+    for (int i = 0; i < filesCount; ++i)
+    {
+        auto data = readFile();
+        if ((data.ba.size() == 0) || (data.count == 0))
+        {
+            throw("data file is empty");
+        }
+
+        listFiles.append(data);
+    }
+
+    auto dirsCount = readDirsCount();
+    if (dirsCount == 0)
+    {
+        throw("dirsCount is 0");
+    }
+    listDirs.clear();
+    for (int i = 0; i < dirsCount; ++i)
+    {
+        auto data = readDirs();
+        //        if ((data.path.isEmpty()))
+        //        {
+        //            throw("data dir is empty");
+        //        }
+
+        listDirs.append(data);
+    }
+
+    qDebug() << ("Succesful!");
+}
+
 bool Parser::findDelimiterInstallator()
 {
     for (int i = 0; i < ba.size(); ++i)
@@ -123,6 +179,26 @@ Data Parser::readDirs()
     currentIndex += pathLength;
 
     return data;
+}
+
+QList<Data> Parser::getListFiles()
+{
+    return listFiles;
+}
+
+QList<Data> Parser::getListDirs()
+{
+    return listDirs;
+}
+
+QByteArray Parser::getUnInstallator()
+{
+    return unInstallator;
+}
+
+QString Parser::getApplicationName()
+{
+    return applicationName;
 }
 
 void Parser::closeFile()

@@ -214,14 +214,14 @@ void Installator::slot_createlink(bool)
     }
 }
 
-void Installator::onPageChanged(int i)
+void Installator::onPageChanged(int page)
 {
     button(QWizard::NextButton)->setText(QString("Далее"));
     button(QWizard::CancelButton)->setText(QString("Отмена"));
     button(QWizard::FinishButton)->setText(QString("Закрыть"));
     button(QWizard::BackButton)->hide();
 
-    if (i == 0) //!< окно установки пути инсталляции
+    if (page == PAGE::FIRST) //!< окно установки пути инсталляции
     {
         path_window->setText(checkInstallDir());
         if (!path_window->isEmpty())
@@ -230,84 +230,85 @@ void Installator::onPageChanged(int i)
         }
     }
 
-    if (i == 1)
+    if (page == PAGE::SECOND)
     {
-        Parser parser(qApp->applicationFilePath());
-        parser.findDelimiterInstallator();
-        auto unInstallator = parser.readUninstallator();
-        auto appName = parser.readApplicationName();
-
-        auto filesCount = parser.readFilesCount();
-        for (int i = 0; i < filesCount; ++i)
+        try
         {
-            auto data = parser.readFile();
-            filesList.append(data);
-        }
+            Parser parser(qApp->applicationFilePath());
+            parser.parse();
 
-        auto dirsCount = parser.readDirsCount();
-        for (int i = 0; i < dirsCount; ++i)
-        {
-            auto data = parser.readDirs();
-            listDirs.append(data);
-        }
+            auto unInstallator = parser.getUnInstallator();
+            auto appName = parser.getApplicationName();
+            listFiles = parser.getListFiles();
+            listDirs = parser.getListDirs();
 
-        for (const auto &dir : listDirs)
-        {
-            QDir qDir(dir.path);
-            if (!qDir.exists())
+            qDebug() << "Succesful!";
+
+            for (const auto &dir : listDirs)
             {
-                qDir.mkdir(installation_path + dir.path);
+                QDir qDir(dir.path);
+                if (!qDir.exists())
+                {
+                    qDir.mkdir(installation_path + dir.path);
+                }
             }
-        }
 
-        for (const auto &file : filesList)
-        {
-            QFile qFile(installation_path + file.path);
-            if (!qFile.open(QIODevice::WriteOnly))
+            for (const auto &file : listFiles)
             {
-                msg.showMessage(qFile.errorString());
+                QFile qFile(installation_path + file.path);
+                if (!qFile.open(QIODevice::WriteOnly))
+                {
+                    msg.showMessage(qFile.errorString());
+                    msg.show();
+                    return;
+                }
+                qFile.write(file.ba);
+                qFile.close();
+            }
+
+#if defined(Q_OS_WIN32) || defined(Q_OS_WIN64)
+            auto name_uninstall = QString("uninstall.exe");
+#elif __linux__
+            auto name_uninstall = QString("uninstall");
+#endif
+            QFile file(installation_path + name_uninstall);
+            if (!file.open(QIODevice::WriteOnly))
+            {
+                msg.showMessage(file.errorString());
                 msg.show();
                 return;
             }
-            qFile.write(file.ba);
-            qFile.close();
-        }
+            file.write(unInstallator); //!< записываем сам деинсталлятор
+            file.write(reinterpret_cast<char *>(&razd_uninstall), sizeof(razd_uninstall)); //!< разделитель между данными
 
-#if defined(Q_OS_WIN32) || defined(Q_OS_WIN64)
-        auto name_uninstall = QString("uninstall.exe");
-#elif __linux__
-        auto name_uninstall = QString("uninstall");
-#endif
-        QFile file(installation_path + name_uninstall);
-        if (!file.open(QIODevice::WriteOnly))
+            int appNameLength = appName.toLocal8Bit().size();
+            file.write(reinterpret_cast<char *>(&appNameLength), sizeof(appNameLength));
+            file.write(appName.toLocal8Bit());
+
+            for (int i = 0; i < listFiles.size(); i++)
+            {
+                int length = listFiles[i].path.toLocal8Bit().size();
+                file.write(reinterpret_cast<char *>(&length), sizeof(length));
+                file.write(listFiles[i].path.toLocal8Bit());
+
+                file.write(reinterpret_cast<char *>(&listFiles[i].autostart), sizeof(bool));
+                file.write(reinterpret_cast<char *>(&listFiles[i].link), sizeof(bool));
+            }
+            addUninstall(applicationName); //добавление деинсталлятора в список установка и удаление программ
+            file.setPermissions(QFileDevice::ExeUser | QFileDevice::ExeOwner | QFileDevice::ExeOther | QFileDevice::ExeGroup
+                                | QFileDevice::WriteUser | QFileDevice::ReadUser);
+            file.close();
+            button(QWizard::NextButton)->setEnabled(true);
+        }
+        catch (QString error)
         {
-            msg.showMessage(file.errorString());
+            qDebug() << (error);
+            msg.showMessage(error);
             msg.show();
             return;
         }
-        file.write(unInstallator); //!< записываем сам деинсталлятор
-        file.write(reinterpret_cast<char *>(&razd_uninstall), sizeof(razd_uninstall)); //!< разделитель между данными
-
-        int appNameLength = appName.toLocal8Bit().size();
-        file.write(reinterpret_cast<char *>(&appNameLength), sizeof(appNameLength));
-        file.write(appName.toLocal8Bit());
-
-        for (int i = 0; i < filesList.size(); i++)
-        {
-            int length = filesList[i].path.toLocal8Bit().size();
-            file.write(reinterpret_cast<char *>(&length), sizeof(length));
-            file.write(filesList[i].path.toLocal8Bit());
-
-            file.write(reinterpret_cast<char *>(&filesList[i].autostart), sizeof(bool));
-            file.write(reinterpret_cast<char *>(&filesList[i].link), sizeof(bool));
-        }
-        addUninstall(applicationName); //добавление деинсталлятора в список установка и удаление программ
-        file.setPermissions(QFileDevice::ExeUser | QFileDevice::ExeOwner | QFileDevice::ExeOther | QFileDevice::ExeGroup
-                            | QFileDevice::WriteUser | QFileDevice::ReadUser);
-        file.close();
-        button(QWizard::NextButton)->setEnabled(true);
     }
-    if (i == 2) //страница создания ярлыка
+    if (page == PAGE::THIRD) //страница создания ярлыка
     {
         button(QWizard::CancelButton)->hide();
         if (!link_list.size())
@@ -319,6 +320,7 @@ void Installator::onPageChanged(int i)
             connect(button(this->FinishButton), &QAbstractButton::clicked, this, &Installator::slot_createlink);
         else
             disconnect(button(this->FinishButton), &QAbstractButton::clicked, this, &Installator::slot_createlink);
+
         if (checkbox[1].isChecked())
             connect(button(this->FinishButton), &QAbstractButton::clicked, this, &Installator::onAutoStartApplication);
         else

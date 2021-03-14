@@ -25,6 +25,14 @@ class Parser
 public:
     Parser(const QString &pathToFile);
     ~Parser();
+    void parse();
+
+    QList<Data> getListFiles();
+    QList<Data> getListDirs();
+    QByteArray getUnInstallator();
+    QString getApplicationName();
+
+private:
     bool findDelimiterInstallator();
     void closeFile();
     QByteArray readUninstallator();
@@ -34,10 +42,13 @@ public:
     int readDirsCount();
     Data readDirs();
 
-private:
     QFile file;
     QByteArray ba;
     unsigned long long delimiterInstallator;
     int indexBeginData;
     int currentIndex;
+    QList<Data> listFiles;
+    QList<Data> listDirs;
+    QByteArray unInstallator;
+    QString applicationName;
 };

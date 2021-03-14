@@ -31,7 +31,7 @@ private:
     PathWindow *path_window;
     QProgressDialog *progressDialog;
     QFile file;
-    QList<Data> filesList;
+    QList<Data> listFiles;
     QList<Data> listDirs;
     QList<Data> link_list;
     QList<Data> autostart_list;
@@ -52,7 +52,7 @@ private:
     QString applicationNameReestr;
 
 public slots:
-    void onPageChanged(int i);
+    void onPageChanged(int page);
     void slot_radiobutton(bool);
     void slot_createlink(bool);
     void onAutoStartApplication();

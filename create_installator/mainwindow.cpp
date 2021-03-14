@@ -212,47 +212,22 @@ void MainWindow::onValid()
         return;
     }
 
-    Parser parser(ui->le_install->text() + QString("/setup.exe"));
-    parser.findDelimiterInstallator();
-    auto unInst = parser.readUninstallator();
-    if (unInst != uninstallator)
+    try
     {
-        setStatusValid("uninstallator is not Valid");
-        return;
+        Parser parser(ui->le_install->text() + QString("/setup.exe"));
+        parser.parse();
+
+        auto unInst = parser.getUnInstallator();
+        auto appName = parser.getApplicationName();
+        auto listFiles = parser.getListFiles();
+        auto listDirs = parser.getListDirs();
+
+        setStatusValid("Succesful!");
     }
-
-    auto appName = parser.readApplicationName();
-
-    auto filesCount = parser.readFilesCount();
-    if (filesCount != listFiles.size())
+    catch (QString error)
     {
-        setStatusValid("listFilesSize is not Valid");
-        return;
+        setStatusValid(error);
     }
-
-    for (int i = 0; i < filesCount; ++i)
-    {
-        auto data = parser.readFile();
-        if ((data.ba.size() == 0) || (data.count == 0))
-        {
-            setStatusValid("error read file " + data.path + QString::number(data.count) + QString::number(data.ba.size()));
-            return;
-        }
-    }
-
-    auto dirsCount = parser.readDirsCount();
-    if (dirsCount != listDirs.size())
-    {
-        setStatusValid("listDirs is not Valid");
-        return;
-    }
-
-    for (int i = 0; i < dirsCount; ++i)
-    {
-        auto data = parser.readDirs();
-    }
-
-    setStatusValid("Succesful!");
 }
 
 void MainWindow::fileDialogCopy()
